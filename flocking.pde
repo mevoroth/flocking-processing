@@ -1,107 +1,168 @@
-class QuadTreeNode
+public class Vector2
 {
-    boolean end = true;
-    /**
-     * ZYX
-     * [0] BBB
-     * [1] BBA
-     * [2] BAB
-     * [3] BAA
-     * [4] ABB
-     * [5] ABA
-     * [6] AAB
-     * [7] AAA
-     */
-    QuadTreeNode nodes[] = new QuadTreeNode[4];
+    public float x, y;
     
-    public QuadTreeNode(int size)
+    public Vector2(float x, float y)
     {
-        if (size == 1)
-        {
-            return;
-        }
-        //size /= 2;
-        size >>= 0x1;
-        nodes[0] = new QuadTreeNode(size);
-        nodes[1] = new QuadTreeNode(size);
-        nodes[2] = new QuadTreeNode(size);
-        nodes[3] = new QuadTreeNode(size);
-//        nodes[4] = new QuadTreeNode(size);
-//        nodes[5] = new QuadTreeNode(size);
-//        nodes[6] = new QuadTreeNode(size);
-//        nodes[7] = new QuadTreeNode(size);
+        this.x = x;
+        this.y = y;
     }
-    public QuadTreeNode node(int x, int y, /*int z,*/ int depth)
+    public Vector2 normalize()
     {
-        QuadTreeNode o = nodes[
-            //((z & 0x1) << 0x2) +
-            ((y & 0x1) << 0x1) +
-            (x & 0x1)
-        ];
-        if (depth == 0)
-        {
-            return o;
-        }
-        return o.node(x >> 0x1, y >> 0x1, /*z >> 0x1,*/ depth - 1);
+        float d = dist();
+        x /= d;
+        y /= d;
+        return this;
+    }
+    public void mult(float m)
+    {
+        x *= m;
+        y *= m;
+    }
+    public float dist()
+    {
+        return sqrt(sqDist());
+    }
+    public float sqDist()
+    {
+        return x*x + y*y;
+    }
+    public Vector2 sub(Vector2 a)
+    {
+        return new Vector2(x - a.x, y - a.y);
+    }
+    public void addTo(Vector2 a)
+    {
+        x += a.x;
+        y += a.y;
+    }
+    public void zero()
+    {
+        x = 0;
+        y = 0;
     }
 }
 
-//class QuadTreeEl extends QuadTreeNode
-//{
-//    ArrayList<Bird> birds = new ArrayList<Bird>();
-//}
-
-class QuadTree
+public class Bird
 {
-    private QuadTreeNode qn;
-    private int depth;
-    public QuadTree(int size)
-    {
-        qn = new QuadTreeNode(size);
-        depth = (int)(log(size)/log(2));
-    }
-    public void insert(int x, int y)
-    {
-        qn.node(x, y, depth);
-    }
-    // 
-}
-
-class Bird
-{
-    int x, y;
-    int dirX, dirY;
+    public Vector2
+        p,   // Position
+        v,   // Velocity
+        r,   // Repulsion
+        a,   // Attraction
+        d    // Direction
+    ;
+    
     public Bird()
     {
-        x = (int)random(screenW);
-        y = (int)random(screenH);
-        dirX = (int)random(5);
-        dirY = (int)random(5);
+        p = new Vector2(random(screenW), random(screenH));
+        v = new Vector2(random(INIT_SPEED*2.0) - INIT_SPEED, random(INIT_SPEED*2.0) - INIT_SPEED);
+        r = new Vector2(0, 0);
+        a = new Vector2(0, 0);
+        d = new Vector2(random(INIT_SPEED*2.0) - INIT_SPEED, random(INIT_SPEED*2.0) - INIT_SPEED);
     }
     public void update()
     {
-        x += dirX;
-        x %= screenW;
-        y += dirY;
-        y %= screenH;
+        repulsion();
+        direction();
+        attraction();
+        
+        v.x += (r.x + a.x + d.x) / 5.5;
+        v.y += (r.y + a.y + d.y) / 5.5;
+        v.normalize();
+        v.mult(2.0);
+        
+        p.x += v.x + screenW;
+        p.x %= screenW;
+        p.y += v.y + screenH;
+        p.y %= screenH;
+        
+        r.zero();
     }
+    
+    public void repulsion()
+    {
+        float rC = 0;
+        for (int i = 0; i < birdsCount; ++i)
+        {
+            if (this == birds.get(i))
+            {
+                continue;
+            }
+            Vector2 diff = p.sub(birds.get(i).p);
+            if (diff.sqDist() < REPULSION)
+            {
+                r.addTo(diff);
+                ++rC;
+            }
+        }
+        if (rC > 0)
+        {
+            r.mult(1.0/rC);
+        }
+        r.normalize();
+    }
+    
+    public void attraction()
+    {
+        float aC = 0;
+        for (int i = 0; i < birdsCount; ++i)
+        {
+            if (this == birds.get(i))
+            {
+                continue;
+            }
+            Vector2 diff = birds.get(i).p.sub(p);
+            if (diff.sqDist() < ATTRACTION)
+            {
+                a.addTo(diff);
+                ++aC;
+            }
+        }
+        if (aC > 0)
+        {
+            r.mult(1.0/aC);
+        }
+        a.normalize();
+    }
+    
+    public void direction()
+    {
+        float dC = 0;
+        for (int i = 0; i < birdsCount; ++i)
+        {
+            if (this == birds.get(i))
+            {
+                continue;
+            }
+            
+            d.addTo(birds.get(i).d);
+            ++dC;
+        }
+        if (dC > 0)
+        {
+            d.mult(1.0/dC);
+        }
+        d.normalize();
+    }
+    
     public void draw()
     {
-        point(x, y);
+        point(p.x, p.y);
     }
 }
 
-QuadTree o;
 ArrayList<Bird> birds = new ArrayList<Bird>();
 int birdsCount = 1000;
 int screenW = 1024;
 int screenH = 768;
 
-
+float INIT_SPEED = 1.0;
+float REPULSION = 2500.0; // Square dist
+float ATTRACTION = 10000.0; // Square dist
 
 void setup()
 {
-    o = new QuadTree(256);
     for (int i = 0; i < birdsCount; ++i)
     {
         birds.add(new Bird());
@@ -115,6 +176,13 @@ void draw()
 {
     background(0);
     stroke(255, 255, 255);
+//    if (mousePressed && mouseButton == LEFT)
+//    {
+//        for (int i = 0; i < birdsCount; ++i)
+//        {
+//            birds.get(i).d = (new Vector2(mouseX, mouseY)).sub(birds.get(i).p).normalize();
+//        }
+//    }
     for (int i = 0; i < birdsCount; ++i)
     {
         birds.get(i).update();
