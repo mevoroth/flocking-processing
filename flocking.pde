@@ -92,6 +92,9 @@ public class Bird
             Vector2 diff = p.sub(birds.get(i).p);
             if (diff.sqDist() < REPULSION)
             {
+                float dist = diff.dist();
+                diff.normalize();
+                diff.mult(1/dist);
                 r.addTo(diff);
                 ++rC;
             }
@@ -115,7 +118,7 @@ public class Bird
             Vector2 diff = birds.get(i).p.sub(p);
             if (diff.sqDist() < ATTRACTION)
             {
-                a.addTo(diff);
+                a.addTo(birds.get(i).p);
                 ++aC;
             }
         }
@@ -135,15 +138,18 @@ public class Bird
             {
                 continue;
             }
-            
-            d.addTo(birds.get(i).d);
-            ++dC;
+            Vector2 diff = birds.get(i).p.sub(p);
+            if (diff.sqDist() < DIRECTION)
+            {
+                d.addTo(birds.get(i).v);
+                ++dC;
+            }
         }
         if (dC > 0)
         {
-            d.mult(1.0/dC);
+            v.mult(1.0/dC);
         }
-        d.normalize();
+        v.normalize();
     }
     
     public void draw()
@@ -159,7 +165,8 @@ int screenH = 768;
 
 float INIT_SPEED = 1.0;
 float REPULSION = 2500.0; // Square dist
-float ATTRACTION = 10000.0; // Square dist
+float DIRECTION = 10000.0; // Square dist
+float ATTRACTION = 22500.0; // Square dist
 
 void setup()
 {
