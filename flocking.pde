@@ -67,10 +67,10 @@ public class Bird
         direction();
         attraction();
         
-        v.x += (r.x + a.x + d.x) / 5.5;
-        v.y += (r.y + a.y + d.y) / 5.5;
+        v.x += (r.x + a.x + d.x);
+        v.y += (r.y + a.y + d.y);
         v.normalize();
-        v.mult(2.0);
+        v.mult(5.0);
         
         p.x += v.x + screenW;
         p.x %= screenW;
@@ -141,15 +141,15 @@ public class Bird
             Vector2 diff = birds.get(i).p.sub(p);
             if (diff.sqDist() < DIRECTION)
             {
-                d.addTo(birds.get(i).v);
+                d.addTo(birds.get(i).d);
                 ++dC;
             }
         }
         if (dC > 0)
         {
-            v.mult(1.0/dC);
+            d.mult(1.0/dC);
         }
-        v.normalize();
+        d.normalize();
     }
     
     public void draw()
@@ -183,17 +183,35 @@ void draw()
 {
     background(0);
     stroke(255, 255, 255);
-//    if (mousePressed && mouseButton == LEFT)
-//    {
-//        for (int i = 0; i < birdsCount; ++i)
-//        {
-//            birds.get(i).d = (new Vector2(mouseX, mouseY)).sub(birds.get(i).p).normalize();
-//        }
-//    }
+    
+    mouseHandler();
+    
     for (int i = 0; i < birdsCount; ++i)
     {
         birds.get(i).update();
         birds.get(i).draw();
+    }
+}
+
+void mouseHandler()
+{
+    if (mousePressed && mouseButton == LEFT)
+    {
+        for (int i = 0; i < birdsCount; ++i)
+        {
+            birds.get(i).d = (new Vector2(mouseX, mouseY)).sub(birds.get(i).p).normalize();
+        }
+    }
+}
+
+void mouseReleased()
+{
+    if (mouseButton == LEFT)
+    {
+        for (int i = 0; i < birdsCount; ++i)
+        {
+            birds.get(i).d = new Vector2(random(INIT_SPEED*2.0) - INIT_SPEED, random(INIT_SPEED*2.0) - INIT_SPEED);
+        }
     }
 }
 
