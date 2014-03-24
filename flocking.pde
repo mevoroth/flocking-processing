@@ -78,6 +78,8 @@ public class Bird
         p.y %= screenH;
         
         r.zero();
+        a.zero();
+        d.zero();
     }
     
     public void repulsion()
@@ -92,9 +94,9 @@ public class Bird
             Vector2 diff = p.sub(birds.get(i).p);
             if (diff.sqDist() < REPULSION)
             {
-                float dist = diff.dist();
+                //float dist = diff.dist();
                 diff.normalize();
-                diff.mult(1/dist);
+                //diff.mult(1/dist);
                 r.addTo(diff);
                 ++rC;
             }
@@ -102,8 +104,8 @@ public class Bird
         if (rC > 0)
         {
             r.mult(1.0/rC);
+            r.normalize();
         }
-        r.normalize();
     }
     
     public void attraction()
@@ -124,9 +126,10 @@ public class Bird
         }
         if (aC > 0)
         {
-            r.mult(1.0/aC);
+            a.mult(1.0/aC);
+            a = a.sub(p);
+            a.normalize();
         }
-        a.normalize();
     }
     
     public void direction()
@@ -141,25 +144,26 @@ public class Bird
             Vector2 diff = birds.get(i).p.sub(p);
             if (diff.sqDist() < DIRECTION)
             {
-                d.addTo(birds.get(i).d);
+                d.addTo(birds.get(i).v);
                 ++dC;
             }
         }
         if (dC > 0)
         {
             d.mult(1.0/dC);
+            d.normalize();
         }
-        d.normalize();
     }
     
     public void draw()
     {
+        //println("Pos : " + p.x + ":" + p.y);
         point(p.x, p.y);
     }
 }
 
 ArrayList<Bird> birds = new ArrayList<Bird>();
-int birdsCount = 1000;
+int birdsCount = 500;
 int screenW = 1024;
 int screenH = 768;
 
@@ -199,7 +203,7 @@ void mouseHandler()
     {
         for (int i = 0; i < birdsCount; ++i)
         {
-            birds.get(i).d = (new Vector2(mouseX, mouseY)).sub(birds.get(i).p).normalize();
+            birds.get(i).v = (new Vector2(mouseX, mouseY)).sub(birds.get(i).p).normalize();
         }
     }
 }
@@ -210,7 +214,7 @@ void mouseReleased()
     {
         for (int i = 0; i < birdsCount; ++i)
         {
-            birds.get(i).d = new Vector2(random(INIT_SPEED*2.0) - INIT_SPEED, random(INIT_SPEED*2.0) - INIT_SPEED);
+            birds.get(i).v = new Vector2(random(INIT_SPEED*2.0) - INIT_SPEED, random(INIT_SPEED*2.0) - INIT_SPEED);
         }
     }
 }
