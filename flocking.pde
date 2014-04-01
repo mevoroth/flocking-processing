@@ -50,7 +50,9 @@ public class Bird
         v,   // Velocity
         r,   // Repulsion
         a,   // Attraction
-        d    // Direction
+        d,   // Direction
+        w,   // Walls
+        c    // Custom
     ;
     
     public Bird()
@@ -60,6 +62,8 @@ public class Bird
         r = new Vector2(0, 0);
         a = new Vector2(0, 0);
         d = new Vector2(random(INIT_SPEED*2.0) - INIT_SPEED, random(INIT_SPEED*2.0) - INIT_SPEED);
+        w = new Vector2(0, 0);
+        c = new Vector2(0, 0);
     }
     public void update()
     {
@@ -67,10 +71,10 @@ public class Bird
         direction();
         attraction();
         
-        v.x += (r.x + a.x + d.x);
-        v.y += (r.y + a.y + d.y);
-        v.normalize();
-        v.mult(5.0);
+        v.x = (r.x + a.x + d.x + w.x + c.x);
+        v.y = (r.y + a.y + d.y + w.y + c.y);
+        //v.normalize();
+        v.mult(5);
         
         p.x += v.x + screenW;
         p.x %= screenW;
@@ -94,9 +98,9 @@ public class Bird
             Vector2 diff = p.sub(birds.get(i).p);
             if (diff.sqDist() < REPULSION)
             {
-                //float dist = diff.dist();
+                float dist = diff.dist();
                 diff.normalize();
-                //diff.mult(1/dist);
+                diff.mult(1/dist);
                 r.addTo(diff);
                 ++rC;
             }
@@ -155,6 +159,26 @@ public class Bird
         }
     }
     
+    public void avoidance()
+    {
+        float aC = 0;
+        for (int i = 0; i < cylindersCount; ++i)
+        {
+            Vector2 diff = cylinders.get(i).sub(p);
+            if (diff.sqDist() < CYLINDER)
+            {
+                w.addTo(diff.normalize());
+                ++aC;
+            }
+        }
+        
+        if (aC > 0)
+        {
+            w.mult(1.0/aC);
+            w.normalize();
+        }
+    }
+    
     public void draw()
     {
         //println("Pos : " + p.x + ":" + p.y);
@@ -162,6 +186,8 @@ public class Bird
     }
 }
 
+ArrayList<Vector2> cylinders = new ArrayList<Vector2>();
+int cylindersCount = 1;
 ArrayList<Bird> birds = new ArrayList<Bird>();
 int birdsCount = 500;
 int screenW = 1024;
@@ -172,12 +198,16 @@ float REPULSION = 2500.0; // Square dist
 float DIRECTION = 10000.0; // Square dist
 float ATTRACTION = 22500.0; // Square dist
 
+float CYLINDER = 10000.0;
+
 void setup()
 {
     for (int i = 0; i < birdsCount; ++i)
     {
         birds.add(new Bird());
     }
+    
+    cylinders.add(new Vector2(512, 384));
     
     size(screenW, screenH);
     frameRate(60);
@@ -203,18 +233,34 @@ void mouseHandler()
     {
         for (int i = 0; i < birdsCount; ++i)
         {
-            birds.get(i).v = (new Vector2(mouseX, mouseY)).sub(birds.get(i).p).normalize();
+            Vector2 diff = (new Vector2(mouseX, mouseY)).sub(birds.get(i).p);
+            float dist = diff.dist();
+            diff.normalize();
+            diff.mult(1/dist);
+            birds.get(i).c = diff.normalize();
+        }
+    }
+    if (mousePressed && mouseButton == RIGHT)
+    {
+        for (int i = 0; i < birdsCount; ++i)
+        {
+            Vector2 diff = birds.get(i).p.sub(new Vector2(mouseX, mouseY));
+            float dist = diff.dist();
+            diff.normalize();
+            diff.mult(1/dist);
+            birds.get(i).c = diff.normalize();
         }
     }
 }
 
 void mouseReleased()
 {
-    if (mouseButton == LEFT)
+    if (mouseButton == LEFT || mouseButton == RIGHT)
     {
         for (int i = 0; i < birdsCount; ++i)
         {
-            birds.get(i).v = new Vector2(random(INIT_SPEED*2.0) - INIT_SPEED, random(INIT_SPEED*2.0) - INIT_SPEED);
+            //birds.get(i).v = new Vector2(random(INIT_SPEED*2.0) - INIT_SPEED, random(INIT_SPEED*2.0) - INIT_SPEED);
+            birds.get(i).c = new Vector2(0.0, 0.0);
         }
     }
 }
