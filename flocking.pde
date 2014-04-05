@@ -50,9 +50,9 @@ void Physics(Bird b)
         Vector2 p = b.p.sub(cylinders.get(i));
         if (p.sqDist() < CYLINDER)
         {
-           p = new Vector2(-p.x, -p.y);
-           b.p = b.p.sub(p.normalize());
            b.v = p.normalize();
+           b.p = new Vector2(p.x - b.v.x, p.y - b.v.y);
+           //b.p = b.p.sub(b.v);
         }
     }
 }
