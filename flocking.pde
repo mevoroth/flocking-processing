@@ -47,12 +47,13 @@ void Physics(Bird b)
 {
     for (int i = 0; i < cylindersCount; ++i)
     {
-        Vector2 p = b.p.sub(cylinders.get(i));
+        Vector2 p = new Vector2(b.p.x, b.p.y);
+        p.addTo(b.v);
+        p = p.sub(cylinders.get(i));
         if (p.sqDist() < CYLINDER)
         {
-           b.v = p.normalize();
-           b.p = new Vector2(p.x - b.v.x, p.y - b.v.y);
-           //b.p = b.p.sub(b.v);
+            p.normalize().mult(5);
+            b.v = p;
         }
     }
 }
@@ -90,12 +91,12 @@ public class Bird
         //v.normalize();
         v.mult(5);
         
+        Physics(this);
+        
         p.x += v.x + screenW;
         p.x %= screenW;
         p.y += v.y + screenH;
         p.y %= screenH;
-        
-        Physics(this);
         
         r.zero();
         a.zero();
