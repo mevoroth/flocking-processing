@@ -43,6 +43,20 @@ public class Vector2
     }
 }
 
+void Physics(Bird b)
+{
+    for (int i = 0; i < cylindersCount; ++i)
+    {
+        Vector2 p = b.p.sub(cylinders.get(i));
+        if (p.sqDist() < CYLINDER)
+        {
+           p = new Vector2(-p.x, -p.y);
+           b.p = b.p.sub(p.normalize());
+           b.v = p.normalize();
+        }
+    }
+}
+
 public class Bird
 {
     public Vector2
@@ -71,8 +85,8 @@ public class Bird
         direction();
         attraction();
         
-        v.x = (r.x + a.x + d.x + w.x + c.x);
-        v.y = (r.y + a.y + d.y + w.y + c.y);
+        v.x = (r.x + a.x + d.x + c.x);
+        v.y = (r.y + a.y + d.y + c.y);
         //v.normalize();
         v.mult(5);
         
@@ -81,9 +95,13 @@ public class Bird
         p.y += v.y + screenH;
         p.y %= screenH;
         
+        Physics(this);
+        
         r.zero();
         a.zero();
         d.zero();
+        w.zero();
+        c.zero();
     }
     
     public void repulsion()
@@ -159,25 +177,25 @@ public class Bird
         }
     }
     
-    public void avoidance()
-    {
-        float aC = 0;
-        for (int i = 0; i < cylindersCount; ++i)
-        {
-            Vector2 diff = cylinders.get(i).sub(p);
-            if (diff.sqDist() < CYLINDER)
-            {
-                w.addTo(diff.normalize());
-                ++aC;
-            }
-        }
-        
-        if (aC > 0)
-        {
-            w.mult(1.0/aC);
-            w.normalize();
-        }
-    }
+//    public void avoidance()
+//    {
+//        float aC = 0;
+//        for (int i = 0; i < cylindersCount; ++i)
+//        {
+//            Vector2 diff = cylinders.get(i).sub(p);
+//            if (diff.sqDist() < CYLINDER)
+//            {
+//                w.addTo(diff.normalize());
+//                ++aC;
+//            }
+//        }
+//        
+//        if (aC > 0)
+//        {
+//            w.mult(1.0/aC);
+//            w.normalize();
+//        }
+//    }
     
     public void draw()
     {
