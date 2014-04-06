@@ -1,3 +1,9 @@
+/**
+ * Basic Vector2 class
+ * 
+ * Useless since we got PVector
+ * For learning purpose
+ */
 public class Vector2
 {
     public float x, y;
@@ -43,8 +49,12 @@ public class Vector2
     }
 }
 
+/**
+ * Physic pass
+ */
 void Physics(Bird b)
 {
+    // Looping all physical objects and repulse entity
     for (int i = 0; i < cylindersCount; ++i)
     {
         Vector2 p = new Vector2(b.p.x, b.p.y);
@@ -66,7 +76,6 @@ public class Bird
         r,   // Repulsion
         a,   // Attraction
         d,   // Direction
-        w,   // Walls
         c    // Custom
     ;
     
@@ -77,34 +86,46 @@ public class Bird
         r = new Vector2(0, 0);
         a = new Vector2(0, 0);
         d = new Vector2(random(INIT_SPEED*2.0) - INIT_SPEED, random(INIT_SPEED*2.0) - INIT_SPEED);
-        w = new Vector2(0, 0);
         c = new Vector2(0, 0);
     }
+    
+    /**
+     * Update loop
+     */
     public void update()
     {
+        // Call to force functions
         repulsion();
         direction();
         attraction();
         
+        // Create direction of entity
         v.x = (r.x + a.x + d.x + c.x);
         v.y = (r.y + a.y + d.y + c.y);
         //v.normalize();
         v.mult(5);
         
+        // Physic pass
         Physics(this);
         
+        // Apply forces
         p.x += v.x + screenW;
         p.x %= screenW;
         p.y += v.y + screenH;
         p.y %= screenH;
         
+        // Zero all vectors
         r.zero();
         a.zero();
         d.zero();
-        w.zero();
         c.zero();
     }
     
+    /**
+     * Repulsion force
+     * 
+     * Basically we create an opposite force from the centroid of local entities
+     */
     public void repulsion()
     {
         float rC = 0;
@@ -131,6 +152,11 @@ public class Bird
         }
     }
     
+    /**
+     * Attraction force
+     * 
+     * Force along the centroid of local entities
+     */
     public void attraction()
     {
         float aC = 0;
@@ -155,6 +181,11 @@ public class Bird
         }
     }
     
+    /**
+     * Direction force
+     * 
+     * Force based on local entities direction
+     */
     public void direction()
     {
         float dC = 0;
@@ -178,26 +209,6 @@ public class Bird
         }
     }
     
-//    public void avoidance()
-//    {
-//        float aC = 0;
-//        for (int i = 0; i < cylindersCount; ++i)
-//        {
-//            Vector2 diff = cylinders.get(i).sub(p);
-//            if (diff.sqDist() < CYLINDER)
-//            {
-//                w.addTo(diff.normalize());
-//                ++aC;
-//            }
-//        }
-//        
-//        if (aC > 0)
-//        {
-//            w.mult(1.0/aC);
-//            w.normalize();
-//        }
-//    }
-    
     public void draw()
     {
         //println("Pos : " + p.x + ":" + p.y);
@@ -205,27 +216,33 @@ public class Bird
     }
 }
 
+// Cylinders
 ArrayList<Vector2> cylinders = new ArrayList<Vector2>();
 int cylindersCount = 1;
+
+// Entities
 ArrayList<Bird> birds = new ArrayList<Bird>();
 int birdsCount = 500;
+
 int screenW = 1024;
 int screenH = 768;
 
 float INIT_SPEED = 1.0;
-float REPULSION = 2500.0; // Square dist
-float DIRECTION = 10000.0; // Square dist
-float ATTRACTION = 22500.0; // Square dist
+float REPULSION = 2500.0; // Repulsion local area (Square dist)
+float DIRECTION = 10000.0; // Direction local area (Square dist)
+float ATTRACTION = 22500.0; // Attraction local area (Square dist)
 
-float CYLINDER = 10000.0;
+float CYLINDER = 10000.0; // Cylinder area (Square dist)
 
 void setup()
 {
+    // Init birds
     for (int i = 0; i < birdsCount; ++i)
     {
         birds.add(new Bird());
     }
     
+    // Init Cylinders
     cylinders.add(new Vector2(512, 384));
     
     size(screenW, screenH);
@@ -239,6 +256,18 @@ void draw()
     
     mouseHandler();
     
+    for (int i = 0; i < cylindersCount; ++i)
+    {
+        noFill();
+        ellipse(
+            cylinders.get(i).x,
+            cylinders.get(i).y,
+            200,
+            200
+        );
+    }
+    
+    // Update loop
     for (int i = 0; i < birdsCount; ++i)
     {
         birds.get(i).update();
@@ -248,6 +277,8 @@ void draw()
 
 void mouseHandler()
 {
+    // Interaction Regroup
+    // We use entity custom force
     if (mousePressed && mouseButton == LEFT)
     {
         for (int i = 0; i < birdsCount; ++i)
@@ -259,6 +290,9 @@ void mouseHandler()
             birds.get(i).c = diff.normalize();
         }
     }
+    
+    // Interaction Repulse
+    // We use entity custom force
     if (mousePressed && mouseButton == RIGHT)
     {
         for (int i = 0; i < birdsCount; ++i)
@@ -274,6 +308,8 @@ void mouseHandler()
 
 void mouseReleased()
 {
+    // Normal Behavior
+    // We're resetting custom force
     if (mouseButton == LEFT || mouseButton == RIGHT)
     {
         for (int i = 0; i < birdsCount; ++i)
